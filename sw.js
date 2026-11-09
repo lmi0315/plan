@@ -1,5 +1,5 @@
-const CACHE='fabric-v2-static-2';
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'])));self.skipWaiting()});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('fabric-')&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
-self.addEventListener('fetch',event=>{const u=new URL(event.request.url);if(u.pathname.startsWith(new URL('./planfolio/',self.registration.scope).pathname))return;if(u.pathname.endsWith('/data/prices.json')){event.respondWith(fetch(event.request,{cache:'no-store'}).catch(()=>caches.match(event.request)));return}if(event.request.method==='GET'&&u.origin===location.origin){event.respondWith(caches.match(event.request).then(r=>r||fetch(event.request).then(resp=>{if(resp.ok){const clone=resp.clone();caches.open(CACHE).then(c=>c.put(event.request,clone))}return resp})))}});
-
+const PREFIX='planfolio:'+new URL(self.registration.scope).pathname+':',CACHE=PREFIX+'9dbb4cc483aa';
+const FILES=['./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./favicon.svg'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES))));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==self.location.origin)return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>r.ok?r:caches.match(new URL('./index.html',self.registration.scope))).catch(()=>caches.match(new URL('./index.html',self.registration.scope))));return;}e.respondWith(caches.match(e.request).then(hit=>hit||fetch(e.request)));});
